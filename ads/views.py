@@ -1,3 +1,5 @@
+import json
+
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -8,10 +10,11 @@ from django.views.generic import DetailView
 from ads.models import Ad, Category
 
 
-def mainpage(request):
+def main_page(request):
     return JsonResponse({
         "status": "ok"
     })
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AdView(View):
@@ -28,6 +31,28 @@ class AdView(View):
             })
         return JsonResponse(response, safe=False)
 
+    def post(self, request):
+        data = json.loads(request.body)
+
+        ad = Ad.objects.create(
+            name=data["name"],
+            author=data["author"],
+            price=data["price"],
+            description=data["description"],
+            address=data["address"],
+            is_published=data["is_published"],
+        )
+        return JsonResponse({
+            "id": ad.id,
+            "name": ad.name,
+            "author": ad.author,
+            "price": ad.price,
+            "description": ad.description,
+            "address": ad.address,
+            "is_published": ad.is_published,
+        })
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class CategoryView(View):
     def get(self, request):
@@ -41,8 +66,21 @@ class CategoryView(View):
             })
         return JsonResponse(response, safe=False)
 
+    def post(self, request):
+        data = json.loads(request.body)
+
+        category = Category.objects.create(
+            name=data['name'],
+        )
+        return JsonResponse({
+            "id": category.id,
+            "name": category.name,
+        })
+
+
 class AdDetailView(DetailView):
     model = Ad
+
     def get(self, request, *args, **kwargs):
         ad = self.get_object()
 
@@ -55,6 +93,7 @@ class AdDetailView(DetailView):
             "address": ad.address,
             "is_published": ad.is_published,
         })
+
 
 class CategoryDetailView(DetailView):
     model = Category
